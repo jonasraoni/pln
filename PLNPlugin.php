@@ -23,7 +23,6 @@ use APP\core\PageRouter;
 use APP\notification\Notification;
 use APP\notification\NotificationManager;
 use APP\facades\Repo;
-use APP\i18n\AppLocale;
 use APP\plugins\generic\pln\classes\DepositDAO;
 use APP\plugins\generic\pln\classes\DepositObjectDAO;
 use APP\plugins\generic\pln\classes\form\PLNSettingsForm;
@@ -296,7 +295,6 @@ class PLNPlugin extends GenericPlugin {
 			if ($op) {
 				if (in_array($op, array('deposits'))) {
 					define('HANDLER_CLASS', 'PLNHandler');
-					AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON);
 					$handlerFile =& $args[2];
 					$handlerFile = $this->getHandlerPath() . '/' . 'PLNHandler.php';
 				}
@@ -312,7 +310,6 @@ class PLNPlugin extends GenericPlugin {
 		switch($request->getUserVar('verb')) {
 			case 'settings':
 				$context = $request->getContext();
-				AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON,  LOCALE_COMPONENT_PKP_MANAGER);
 				$form = new PLNSettingsForm($this, $context->getId());
 
 				if ($request->getUserVar('refresh')) {
@@ -342,7 +339,6 @@ class PLNPlugin extends GenericPlugin {
 				$depositDao = DAORegistry::getDAO('DepositDAO');
 
 				$context = $request->getContext();
-				AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON,  LOCALE_COMPONENT_PKP_MANAGER);
 				$form = new PLNStatusForm($this, $context->getId());
 
 				if ($request->getUserVar('reset')) {
