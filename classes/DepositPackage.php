@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file classes/DepositPackage.inc.php
+ * @file classes/DepositPackage.php
  *
  * Copyright (c) 2013-2023 Simon Fraser University
  * Copyright (c) 2003-2023 John Willinsky
