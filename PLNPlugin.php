@@ -36,9 +36,6 @@ use PKP\db\DAORegistry;
 use PKP\notification\PKPNotification;
 use PKP\plugins\Hook;
 
-import('classes.publication.Publication');
-import('classes.issue.Issue');
-
 define('PLN_PLUGIN_NAME', 'plnplugin');
 
 // defined here in case an upgrade doesn't pick up the default value.
@@ -87,10 +84,6 @@ class PLNPlugin extends GenericPlugin {
 		if (!parent::register($category, $path, $mainContextId)) return false;
 		if ($this->getEnabled()) {
 			$this->registerDAOs();
-			$this->import('classes.Deposit');
-			$this->import('classes.DepositObject');
-			$this->import('classes.DepositPackage');
-
 			Hook::add('PluginRegistry::loadCategory', array($this, 'callbackLoadCategory'));
 			Hook::add('LoadHandler', array($this, 'callbackLoadHandler'));
 			Hook::add('NotificationManager::getNotificationContents', array($this, 'callbackNotificationContents'));
@@ -110,7 +103,7 @@ class PLNPlugin extends GenericPlugin {
 		$component = $params[0];
 		switch ($component) {
 			case 'plugins.generic.pln.controllers.grid.PLNStatusGridHandler':
-				// Allow the PLN status grid handler to get the plugin object
+				// Allow the PLNStatusGridHandler to get the plugin object
 				import($component);
 				$componentPieces = explode('.', $component);
 				$className = array_pop($componentPieces);
@@ -179,15 +172,8 @@ class PLNPlugin extends GenericPlugin {
 	 * Register this plugin's DAOs with the application
 	 */
 	public function registerDAOs() {
-
-		$this->import('classes.DepositDAO');
-		$this->import('classes.DepositObjectDAO');
-
-		$depositDao = new DepositDAO();
-		DAORegistry::registerDAO('DepositDAO', $depositDao);
-
-		$depositObjectDao = new DepositObjectDAO();
-		DAORegistry::registerDAO('DepositObjectDAO', $depositObjectDao);
+		DAORegistry::registerDAO('DepositDAO', new DepositDAO());
+        DAORegistry::registerDAO('DepositObjectDAO', new DepositObjectDAO());
 	}
 
 	/**
@@ -208,7 +194,6 @@ class PLNPlugin extends GenericPlugin {
 	 * @copydoc Plugin::getInstallMigration()
 	 */
 	function getInstallMigration() {
-		$this->import('PLNPluginSchemaMigration');
 		return new PLNPluginSchemaMigration();
 	}
 
@@ -262,7 +247,6 @@ class PLNPlugin extends GenericPlugin {
 		$plugins =& $args[1];
 		switch ($category) {
 			case 'gateways':
-				$this->import('PLNGatewayPlugin');
 				$gatewayPlugin = new PLNGatewayPlugin($this->getName());
 				$plugins[$gatewayPlugin->getSeq()][$gatewayPlugin->getPluginPath()] =& $gatewayPlugin;
 				break;
@@ -329,7 +313,6 @@ class PLNPlugin extends GenericPlugin {
 			case 'settings':
 				$context = $request->getContext();
 				AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON,  LOCALE_COMPONENT_PKP_MANAGER);
-				$this->import('classes.form.PLNSettingsForm');
 				$form = new PLNSettingsForm($this, $context->getId());
 
 				if ($request->getUserVar('refresh')) {
@@ -360,7 +343,6 @@ class PLNPlugin extends GenericPlugin {
 
 				$context = $request->getContext();
 				AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON,  LOCALE_COMPONENT_PKP_MANAGER);
-				$this->import('classes.form.PLNStatusForm');
 				$form = new PLNStatusForm($this, $context->getId());
 
 				if ($request->getUserVar('reset')) {
