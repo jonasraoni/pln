@@ -14,19 +14,24 @@
 
 namespace APP\plugins\generic\pln\controllers\grid;
 
+use APP\core\Request;
+use APP\plugins\generic\pln\classes\DepositDAO;
+use APP\plugins\generic\pln\form\Deposit;
+use APP\plugins\generic\pln\PLNPlugin;
 use PKP\controllers\grid\feature\PagingFeature;
 use PKP\controllers\grid\GridColumn;
 use PKP\controllers\grid\GridHandler;
+use PKP\core\JSONMessage;
 use PKP\db\DAO;
 use PKP\db\DAORegistry;
+use PKP\db\DAOResultFactory;
 use PKP\plugins\PluginRegistry;
 use PKP\security\authorization\ContextAccessPolicy;
 use PKP\security\Role;
 
 class PLNStatusGridHandler extends GridHandler
 {
-    /** @var PLNPlugin The pln plugin */
-    public static $plugin;
+    public static PLNPlugin $plugin;
 
     /**
      * Constructor
@@ -38,29 +43,23 @@ class PLNStatusGridHandler extends GridHandler
             [Role::ROLE_ID_MANAGER],
             ['fetchGrid', 'fetchRow', 'resetDeposit']
         );
-        self::$plugin = PluginRegistry::getPlugin('generic', PLN_PLUGIN_NAME);
+        /** @var PLNPlugin */
+        $plugin = PluginRegistry::getPlugin('generic', PLN_PLUGIN_NAME);
+        self::$plugin = $plugin;
     }
 
     /**
-     * Set the translator plugin.
-     *
-     * @param StaticPagesPlugin $plugin
+     * Set the plugin
      */
-    public static function setPlugin($plugin)
+    public static function setPlugin(PLNPlugin $plugin): void
     {
         self::$plugin = $plugin;
     }
 
-
-    //
-    // Overridden template methods
-    //
     /**
      * @copydoc Gridhandler::initialize()
-     *
-     * @param null|mixed $args
      */
-    public function initialize($request, $args = null)
+    public function initialize($request, $args = null): void
     {
         parent::initialize($request);
 
@@ -82,7 +81,7 @@ class PLNStatusGridHandler extends GridHandler
     /**
      * @copydoc GridHandler::initFeatures()
      */
-    public function initFeatures($request, $args)
+    public function initFeatures($request, $args): array
     {
         return [new PagingFeature()];
     }
@@ -90,7 +89,7 @@ class PLNStatusGridHandler extends GridHandler
     /**
      * @copydoc GridHandler::getRowInstance()
      */
-    protected function getRowInstance()
+    protected function getRowInstance(): PLNStatusGridRow
     {
         return new PLNStatusGridRow();
     }
@@ -98,7 +97,7 @@ class PLNStatusGridHandler extends GridHandler
     /**
      * @copydoc GridHandler::authorize()
      */
-    public function authorize($request, &$args, $roleAssignments)
+    public function authorize($request, &$args, $roleAssignments): bool
     {
         $this->addPolicy(new ContextAccessPolicy($request, $roleAssignments));
         return parent::authorize($request, $args, $roleAssignments);
@@ -106,8 +105,10 @@ class PLNStatusGridHandler extends GridHandler
 
     /**
      * @copydoc GridHandler::loadData()
+     *
+     * @return DAOResultFactory<Deposit>
      */
-    protected function loadData($request, $filter)
+    protected function loadData($request, $filter): DAOResultFactory
     {
         $context = $request->getContext();
         /** @var DepositDAO */
@@ -116,26 +117,18 @@ class PLNStatusGridHandler extends GridHandler
         return $depositDao->getByJournalId($context->getId(), $rangeInfo);
     }
 
-    //
-    // Public Grid Actions
-    //
     /**
      * Reset Deposit
-     *
-     * @param array $args
-     * @param PKPRequest $request
-     *
-     * @return JSONMessage Serialized JSON object
      */
-    public function resetDeposit($args, $request)
+    public function resetDeposit(array $args, Request $request): JSONMessage
     {
         $depositId = $args['depositId'];
         /** @var DepositDAO */
         $depositDao = DAORegistry::getDAO('DepositDAO');
         $journal = $request->getJournal();
 
-        if (!is_null($depositId)) {
-            $deposit = $depositDao->getById($depositId, $journal->getId()); /** @var Deposit $deposit */
+        if ($depositId) {
+            $deposit = $depositDao->getById($depositId, $journal->getId());
 
             $deposit->setNewStatus();
 

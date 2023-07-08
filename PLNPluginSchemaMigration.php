@@ -18,13 +18,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use PKP\install\DowngradeNotSupportedException;
 
 class PLNPluginSchemaMigration extends Migration
 {
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
         // PLN Deposit Objects
         if (!Schema::hasTable('pln_deposit_objects')) {
@@ -65,7 +66,7 @@ class PLNPluginSchemaMigration extends Migration
     /**
      * Upgrade and fixes
      */
-    protected function upgrade()
+    protected function upgrade(): void
     {
         // Before the version 2.0.4.3, it's needed to check for a missing "export_deposit_error" field
         if (!Schema::hasColumn('pln_deposits', 'export_deposit_error')) {
@@ -84,5 +85,13 @@ class PLNPluginSchemaMigration extends Migration
             // Reset status
             DB::table('pln_deposits')->update(['status', null]);
         }
+    }
+
+    /**
+     * Downgrade.
+     */
+    public function down(): void
+    {
+        throw new DowngradeNotSupportedException();
     }
 }

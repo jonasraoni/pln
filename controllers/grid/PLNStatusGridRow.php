@@ -14,19 +14,15 @@
 
 namespace APP\plugins\generic\pln\controllers\grid;
 
+use APP\plugins\generic\pln\form\Deposit;
 use PKP\controllers\grid\GridRow;
 
 class PLNStatusGridRow extends GridRow
 {
-    //
-    // Overridden template methods
-    //
     /**
      * @copydoc GridRow::initialize()
-     *
-     * @param null|mixed $template
      */
-    public function initialize($request, $template = null)
+    public function initialize($request, $template = null): void
     {
         parent::initialize($request, PLNStatusGridHandler::$plugin->getTemplateResource('gridRow.tpl'));
     }

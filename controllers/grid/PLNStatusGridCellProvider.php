@@ -14,21 +14,20 @@
 
 namespace APP\plugins\generic\pln\controllers\grid;
 
+use APP\core\Application;
+use APP\plugins\generic\pln\classes\DepositObject;
+use APP\plugins\generic\pln\form\Deposit;
+use Exception;
+use LinkAction;
 use PKP\controllers\grid\GridCellProvider;
-use PKP\controllers\grid\GridColumn;
+use PKP\linkAction\request\RemoteActionConfirmationModal;
 
 class PLNStatusGridCellProvider extends GridCellProvider
 {
     /**
-     * Extracts variables for a given column from a data element
-     * so that they may be assigned to template before rendering.
-     *
-     * @param \PKP\controllers\grid\GridRow $row
-     * @param GridColumn $column
-     *
-     * @return array
+     * @copydoc GridCellProvider::getTemplateVarsFromRowColumn()
      */
-    public function getTemplateVarsFromRowColumn($row, $column)
+    public function getTemplateVarsFromRowColumn($row, $column): array
     {
         $deposit = $row->getData(); /** @var Deposit $deposit */
 
@@ -44,7 +43,7 @@ class PLNStatusGridCellProvider extends GridCellProvider
                     if ($content instanceof Issue) {
                         $label[] = $content->getIssueIdentification();
                     } else {
-                        $label[] = $content->getLocalizedTitle();
+                        $label[] = $content->getLocalizedData('title');
                     }
                 }
                 return ['label' => implode(' ', $label)];
@@ -62,7 +61,7 @@ class PLNStatusGridCellProvider extends GridCellProvider
     /**
      * @copydoc GridColumn::getCellActions()
      */
-    public function getCellActions($request, $row, $column, $position = GRID_ACTION_POSITION_DEFAULT)
+    public function getCellActions($request, $row, $column, $position = GRID_ACTION_POSITION_DEFAULT): array
     {
         if ($column->getId() !== 'actions') {
             return [];
@@ -71,22 +70,23 @@ class PLNStatusGridCellProvider extends GridCellProvider
         $request = Application::get()->getRequest();
         $rowId = $row->getId();
         $actionArgs['depositId'] = $rowId;
-        if (!empty($rowId)) {
-            $router = $request->getRouter();
-            // Create the "reset deposit" action
-            import('lib.pkp.classes.linkAction.request.RemoteActionConfirmationModal');
-            $link = new LinkAction(
-                'resetDeposit',
-                new RemoteActionConfirmationModal(
-                    $request->getSession(),
-                    __('plugins.generic.pln.status.confirmReset'),
-                    __('form.resubmit'),
-                    $router->url($request, null, null, 'resetDeposit', null, $actionArgs, 'modal_reset')
-                ),
-                __('form.resubmit'),
-                'reset'
-            );
-            return [$link];
+        if (empty($rowId)) {
+            return [];
         }
+
+        $router = $request->getRouter();
+        // Create the "reset deposit" action
+        $link = new LinkAction(
+            'resetDeposit',
+            new RemoteActionConfirmationModal(
+                $request->getSession(),
+                __('plugins.generic.pln.status.confirmReset'),
+                __('form.resubmit'),
+                $router->url(request: $request, op: 'resetDeposit', params: $actionArgs, anchor: 'modal_reset')
+            ),
+            __('form.resubmit'),
+            'reset'
+        );
+        return [$link];
     }
 }
